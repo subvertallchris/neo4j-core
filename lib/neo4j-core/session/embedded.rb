@@ -1,8 +1,17 @@
 module Neo4j
   module Session
+    # A session to an embedded instance of Neo4J
     class Embedded
+      # @!attribute [r] auto_tx
+      #   @return [Boolean] Auto Transaction flag. Enabled by default.
       attr_accessor :auto_tx
 
+      # Create a new session to an embedded database.
+      #
+      # @param path [String] a path to the location of the embedded database.
+      # @param auto_tx [Boolean] an optional flag to set auto transaction (defaults to true).
+      #
+      # @return [Embedded] a new embedded session.
       def initialize(path = "neo4j", auto_tx = true)
         raise "Cannot start a embedded session without JRuby" if RUBY_PLATFORM != 'java'
         @db_location = path
@@ -10,10 +19,12 @@ module Neo4j
         @auto_tx = auto_tx
       end
 
+      # @return [Boolean] wether the session is running or not.
       def running?
         @running
       end
 
+      # @return [Java::OrgNeo4jKernel::EmbeddedGraphDatabase] the Java graph database backing this session.
       def database
         @db
       end

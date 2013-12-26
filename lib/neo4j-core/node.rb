@@ -5,12 +5,13 @@ module Neo4j
     extend Neo4j::ArgumentHelpers
 
     class << self
-      # Creates a new Node and immediately persists it to the database. All subsequent changes are immediately persisted.
+      # Creates a new Node in the database. All subsequent changes are immediately persisted.
       #
-      # @param attributes [Hash] the properties to initialize the node with.
-      # @param labels [String, Symbol, Array<String, Symbol>] an optional list of labels or an array of labels. Labels can be strings or symbols.
-      # @param session [Session] an optional session can be provided as the last value to indicate the database where to create the node.
-      #   If none is provided then the current session is assumed.
+      # @overload new(attributes, labels, session)
+      #   @param attributes [Hash] the properties to initialize the node with.
+      #   @param labels [String, Symbol, Array<String, Symbol>] an optional list of labels or an array of labels. Labels can be strings or symbols.
+      #   @param session [Session] an optional session can be provided as the last value to indicate the database where to create the node.
+      #     If none is provided then the current session is assumed.
       #
       # @return [Node] a new node.
       #

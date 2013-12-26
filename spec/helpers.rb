@@ -33,7 +33,7 @@ module Helpers
         Neo4j::Session.new :rest
         query = <<-EOQ
         START n = node(*)
-        MATCH n-[r?]-()
+        OPTIONAL MATCH n-[r]-()
         WHERE ID(n) > 0
         DELETE n, r
         EOQ

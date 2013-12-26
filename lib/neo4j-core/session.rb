@@ -6,8 +6,7 @@ module Neo4j
   # A session established with a Neo4J database.
   module Session
     class << self
-      # The current default session running right now.
-      attr_accessor :current
+      attr_accessor :current # The current default session running right now.
       
       # Create a new session with the database.
       #
@@ -58,7 +57,7 @@ module Neo4j
       def stop
         if @current
           result = @current.stop
-          @current = nil
+          @current = nil if result
           result
         else
           true

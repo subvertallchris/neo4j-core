@@ -7,10 +7,11 @@ require "neo4j-core/relationship/rest"
 # If the platform is Java then load all java related files.
 if RUBY_PLATFORM == 'java'
   require "java"
-  Dir["#{Dir.pwd}/lib/neo4j-core/jars/*.jar"].each do |jar|
-    jar = File.basename(jar)
-    require "neo4j-core/jars/#{jar}"
-  end
+  # Dir["#{Dir.pwd}/lib/neo4j-core/jars/*.jar"].each do |jar|
+  #   jar = File.basename(jar)
+  #   require "neo4j-core/jars/#{jar}"
+  # end
+  require "neo4j-community"
   require "neo4j-core/node/embedded"
   require "neo4j-core/relationship/embedded"
 end

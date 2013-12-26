@@ -22,14 +22,12 @@ It comes included with the Apache Lucene document database.
 
   s.require_path = 'lib'
   s.files = Dir.glob("{bin,lib,config}/**/*") + %w(README.md Gemfile neo4j-core.gemspec)
-  s.has_rdoc = true
-  s.extra_rdoc_files = %w( README.md )
-  s.rdoc_options = ["--quiet", "--title", "Neo4j", "--line-numbers", "--main", "README.rdoc", "--inline-source"]
 
   # Development dependencies
   s.add_development_dependency "os"
   s.add_development_dependency "rake", ">= 0.8.7"
   s.add_development_dependency "rspec", "~> 2.8"
+  s.add_development_dependency "yard"
 
   s.add_dependency "httparty"
   s.add_dependency "json"
