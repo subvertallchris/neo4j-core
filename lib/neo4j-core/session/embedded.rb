@@ -17,6 +17,9 @@ module Neo4j
         @db_location = path
         @running = false
         @auto_tx = auto_tx
+        # Make tests pass right now by starting a top level transaction
+        # Needs to be removed one in built auto_tx support is implemented across nodes and relationships
+        @tx = begin_tx
       end
 
       # @return [Boolean] wether the session is running or not.
@@ -43,6 +46,9 @@ module Neo4j
         @db.shutdown
         @running = false
         @stopped = true
+        # Need to be removed as specified in constructor
+        @tx.success
+        @tx.close
       end
 
       def begin_tx
