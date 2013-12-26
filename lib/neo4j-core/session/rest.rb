@@ -35,9 +35,18 @@ module Neo4j
         Relationship::Rest.new(rel, self)
       end
 
+      def begin_tx
+        # Fetch the transaction associated with session. If none is found then begin a new one.
+        # Thread.current[ID_MAPPER] || Thread.current[ID_MAPPER] = Transaction::Rest.new(self)
+        Transaction::Rest.new self
+      end
+
       def to_s
         @url
       end
+
+      # private
+        # ID_MAPPER = "Neo4j::#{to_s}"
     end
   end
 end

@@ -2,7 +2,7 @@ module Neo4j
   module Session
     # A session to an embedded instance of Neo4J
     class Embedded
-      # @!attribute [r] auto_tx
+      # @!attribute
       #   @return [Boolean] Auto Transaction flag. Enabled by default.
       attr_accessor :auto_tx
 
@@ -29,37 +29,33 @@ module Neo4j
         @db
       end
 
+      # @return [Boolean] wether the session started successfully.
       def start
         return false if @started
         @started = true
         @db = Java::OrgNeo4jGraphdbFactory::GraphDatabaseFactory.new.new_embedded_database(@db_location)
-        @transaction = @db.begin_tx
         @running = true
       end
 
+      # @return [Boolean] wether the session stopped successfully.
       def stop
         return false if @stopped
-        @transaction.success
-        @transaction.finish
         @db.shutdown
         @running = false
         @stopped = true
       end
 
-      def run_transaction(&block)
-        return unless block_given?
-        transaction = @db.begin_tx
-        result = yield
-        transaction.success
-        transaction.finish
-        result
+      def begin_tx
+        @db.begin_tx
       end
 
       # Nodes
       # Create a new node. If auto_tx is true then we begin a new transaction and commit it after the creation
       def create_node(attributes, labels)
         if @auto_tx
-          run_transaction { _create_node(attributes, labels) }
+          node, result = Transaction.run(self) { _create_node(attributes, labels) }
+          node = nil unless result
+          node
         else
           _create_node(attributes, labels)
         end

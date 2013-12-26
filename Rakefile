@@ -39,16 +39,16 @@ namespace :test do
       abort("Session validity specs failed") unless success
     end
 
-    desc "Run validity specs for Node"
-    task :node do
+    desc "Run validity specs for nodes"
+    task :nodes do
       success = system('rspec spec/node_spec.rb')
-      abort("Node validity specs failed") unless success
+      abort("nodes validity specs failed") unless success
     end
 
-    desc "Run validity specs for Label"
-    task :label do
-      success = system('rspec spec/label_spec.rb')
-      abort("Label validity specs failed") unless success
+    desc "Run validity specs for transactions"
+    task :transactions do
+      success = system('rspec spec/transaction_spec.rb')
+      abort("Transaction validity specs failed") unless success
     end
   end
 
@@ -66,23 +66,23 @@ namespace :test do
       abort("REST Session specs failed") unless success
     end
 
-    desc "Run REST specs for Node"
-    task :node do
+    desc "Run REST specs for nodes"
+    task :nodes do
       success = system('rspec spec/rest/node_spec.rb')
-      abort("REST Node specs failed") unless success
+      abort("REST nodes specs failed") unless success
     end
 
-    desc "Run REST specs for Label"
-    task :label do
-      success = system('rspec spec/rest/label_spec.rb')
-      abort("REST Label specs failed") unless success
-    end
-
-    desc "Run REST specs for Relationship"
-    task :relationship do
+    desc "Run REST specs for relationships"
+    task :relationships do
       success = system('rspec spec/rest/relationship_spec.rb')
-      abort("REST Relationship specs failed") unless success
-    end    
+      abort("REST relationships specs failed") unless success
+    end
+
+    desc "Run REST specs for Transaction"
+    task :transactions do
+      success = system('rspec spec/rest/transaction_spec.rb')
+      abort("REST transactions specs failed") unless success
+    end
   end
 
   desc "Embedded implementation"
@@ -101,39 +101,39 @@ namespace :test do
       abort("Embedded Session specs failed") unless success
     end
 
-    desc "Run Embedded specs for Node"
-    task :node do
+    desc "Run Embedded specs for nodes"
+    task :nodes do
       assert_platform
       success = system('rspec spec/embedded/node_spec.rb')
-      abort("Embedded Node specs failed") unless success
+      abort("Embedded nodes specs failed") unless success
     end
 
-    desc "Run Embedded specs for Label"
-    task :label do
-      assert_platform
-      success = system('rspec spec/embedded/label_spec.rb')
-      abort("Embedded Label specs failed") unless success
-    end
-
-    desc "Run Embedded specs for Relationship"
-    task :relationship do
+    desc "Run Embedded specs for relationships"
+    task :relationships do
       assert_platform
       success = system('rspec spec/embedded/relationship_spec.rb')
-      abort("Embedded Relationship specs failed") unless success
+      abort("Embedded relationships specs failed") unless success
+    end
+
+    desc "Run Embedded specs for Transaction"
+    task :transactions do
+      assert_platform
+      success = system('rspec spec/embedded/transaction_spec.rb')
+      abort("Embedded transactions specs failed") unless success
     end
   end
 
   desc "Run all the Session specs"
   task session: ['test:validity:session', 'test:rest:session', 'test:embedded:session']
 
-  desc "Run all the Node specs"
-  task node: ['test:validity:node', 'test:rest:node', 'test:embedded:node']
+  desc "Run all the nodes specs"
+  task nodes: ['test:validity:nodes', 'test:rest:nodes', 'test:embedded:nodes']
 
-  desc "Run all the Label specs"
-  task label: ['test:validity:label', 'test:rest:label', 'test:embedded:label']
+  desc "Run all the relationships specs"
+  task relationships: ['test:rest:relationships', 'test:embedded:relationships']
 
-  desc "Run all the Relationship specs"
-  task relationship: ['test:rest:relationship', 'test:embedded:relationship']
+  desc "Run all the Transaction specs"
+  task transactions: ['test:validity:transactions', 'test:rest:transactions', 'test:embedded:transactions']
 end
 
 desc "Run all the neo4j-core specs"
