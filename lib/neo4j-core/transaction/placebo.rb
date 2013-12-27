@@ -27,6 +27,11 @@ module Neo4j
         end
         tx.close
         return result, placebo.success?
+      rescue Exception => e
+        # Roll back the transaction
+        tx.failure
+        tx.close
+        raise e # Let the exception bubble up
       end
     end
   end

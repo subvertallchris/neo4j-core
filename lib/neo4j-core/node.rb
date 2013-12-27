@@ -20,8 +20,7 @@ module Neo4j
         begin
           session.create_node(attributes, labels)
         rescue NoMethodError => e
-          STDERR.puts e
-          _raise_invalid_session_error(session)
+          _raise_invalid_session_error(session, e)
         end
       end
 
@@ -34,13 +33,14 @@ module Neo4j
       def load(id, session = Neo4j::Session.current)
         begin
           session.load(id)
-        rescue NoMethodError
-          _raise_invalid_session_error(session)
+        rescue NoMethodError => e
+          _raise_invalid_session_error(session, e)
         end
       end
 
       private
-        def _raise_invalid_session_error(session)
+        def _raise_invalid_session_error(session, e)
+          STDERR.puts e
           raise Neo4j::Session::InvalidSessionTypeError.new(session.class)
         end
     end

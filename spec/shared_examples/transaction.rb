@@ -19,7 +19,7 @@ module Neo4j
 
       describe "run" do
         context "runs the block passed in a new transaction and closes the transaction" do
-          it "returns the result of the block and wether the transaction was successful or not (defaults to successful" do
+          it "returns the result of the block and wether the transaction was successful or not (defaults to successful)" do
             _, success = Transaction.run do |t|
               do_some_arbitrary_shit
             end

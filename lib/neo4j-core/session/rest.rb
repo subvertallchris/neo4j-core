@@ -6,7 +6,7 @@ module Neo4j
       attr_reader :neo, :url
       attr_accessor :auto_tx
       
-      def initialize(url = "http://localhost:7474", auto_tx = true)
+      def initialize(url = "http://localhost:7474", auto_tx = false)
         @neo = Neography::Rest.new url
         @url = url
         @auto_tx = auto_tx
@@ -38,8 +38,7 @@ module Neo4j
       end
 
       def begin_tx
-        # Fetch the transaction associated with session. If none is found then begin a new one.
-        Thread.current[ID_MAPPER] || Thread.current[ID_MAPPER] = Transaction::Rest.new(self)
+        Transaction::Rest.begin_tx(self)
       end
 
       def run_tx(&block)
@@ -49,9 +48,6 @@ module Neo4j
       def to_s
         @url
       end
-
-      private
-        ID_MAPPER = "Neo4j::#{to_s}"
     end
   end
 end

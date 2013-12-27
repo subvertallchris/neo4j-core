@@ -10,16 +10,26 @@ module Neo4j
       #   Session: self
       #   Entity: get_graph_database
       if respond_to?(:get_graph_database)
-        tx = get_graph_database.begin_tx
-        result = yield if block_given?
-        tx.success
-        tx.close
+        begin
+          tx = get_graph_database.begin_tx
+          result = yield if block_given?
+          tx.success
+          tx.close
+        rescue Exception => e
+          # Roll back the transaction
+          tx.failure
+          tx.close
+          raise e # Let the exception bubble up
+        end
       else
         session = @session || self
-        result, _ = if session.auto_tx
-                      Transaction.run(session, &block)
+        result = if session.auto_tx
+                      r = Transaction.run(session, &block)
+                      r.pop
+                      r = r.pop if r.length == 1
+                      r
                     else
-                      send method, *args
+                      yield if block_given?
                     end
       end
       result

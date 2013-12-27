@@ -65,8 +65,8 @@ module Neo4j
 
         def _destroy
           _delete
-          @start.delete
-          @end.delete
+          @start.del
+          @end.del
         end
     end
   end

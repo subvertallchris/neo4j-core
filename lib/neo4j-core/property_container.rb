@@ -2,9 +2,9 @@ module Neo4j
   # A module to contain REST and Embedded implementation for a property container namely nodes and relationships
   # @author Ujjwal Thaakar
   module PropertyContainer
-    include TransactionHelpers
     # Server implementation for a property container
     module Rest
+      include TransactionHelpers
       # Compares to anothe property container
       #
       # @param other [PropertyContainer] the other property container being compared to
@@ -34,7 +34,7 @@ module Neo4j
           end
         end
       rescue NoMethodError => e
-        raise_doesnt_exist_anymore_error(e)
+        _raise_doesnt_exist_anymore_error(e)
       end
 
       # Set one or more properties e.g. node[:property, :another_property] = 5, "Neo4J". nil keys are ignored.
@@ -53,7 +53,7 @@ module Neo4j
           self.props = properties # Reset all the properties - write simple inefficient code until it proves inefficient
         end
       rescue NoMethodError => e
-        raise_doesnt_exist_anymore_error(e)
+        _raise_doesnt_exist_anymore_error(e)
       end
 
       # Return all properties of the property container.
@@ -64,7 +64,7 @@ module Neo4j
           _get_properties || {}
         end
       rescue NoMethodError => e
-        raise_doesnt_exist_anymore_error(e)
+        _raise_doesnt_exist_anymore_error(e)
       end
 
       # Reset all properties of the property container.
@@ -79,7 +79,7 @@ module Neo4j
           return
         end
       rescue NoMethodError => e
-        raise_doesnt_exist_anymore_error(e)
+        _raise_doesnt_exist_anymore_error(e)
       end
 
       # Delete this entity.
@@ -89,7 +89,7 @@ module Neo4j
           _set_private_vars_to_nil
         end
       rescue NoMethodError => e
-        raise_doesnt_exist_anymore_error(e)
+        _raise_doesnt_exist_anymore_error(e)
       end
 
       # Destroy this entity i.e. delete it and it's associated entities e.g. relationships of a node
@@ -100,7 +100,7 @@ module Neo4j
           _set_private_vars_to_nil
         end
       rescue NoMethodError => e
-        raise_doesnt_exist_anymore_error(e)
+        _raise_doesnt_exist_anymore_error(e)
       end
 
       private
@@ -121,6 +121,7 @@ module Neo4j
 
     # Embedded implementation for a property container
     module Embedded
+      include TransactionHelpers
       def self.included(klazz)
         raise "Cannot include PropertyContainer::Embedded without JRuby" unless RUBY_PLATFORM == 'java'
       end
