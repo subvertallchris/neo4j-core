@@ -1,6 +1,6 @@
 module Neo4j
   module Transaction
-    class PlaceboTransaction
+    class Placebo
       def success
         @success = true
       end

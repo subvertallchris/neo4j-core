@@ -97,7 +97,7 @@ module Neo4j
       describe "delete" do
         let(:rel) { Relationship.new start_node, :RANDOM, end_node, since: Date.parse("29/10/2013"), through: "Gmail" }
         it "deletes the node" do
-          rel.delete
+          rel.del
         end
       end
 

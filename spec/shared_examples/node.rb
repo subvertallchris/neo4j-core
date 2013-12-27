@@ -80,7 +80,7 @@ module Neo4j
 
       describe "delete" do
         it "deletes the node" do
-          node.delete
+          node.del
         end
       end
 

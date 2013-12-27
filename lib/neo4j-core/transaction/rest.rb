@@ -1,8 +1,6 @@
-require "neo4j-core/transaction/placebo_transaction"
-
 module Neo4j
   module Transaction
-    class Rest < PlaceboTransaction
+    class Rest < Placebo
       def initialize(session)
         @session = session
         @tx = @session.neo.begin_transaction

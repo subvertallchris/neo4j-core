@@ -2,6 +2,7 @@ module Neo4j
   module Session
     # A session to an embedded instance of Neo4J
     class Embedded
+      include TransactionHelpers
       # @!attribute
       #   @return [Boolean] Auto Transaction flag. Enabled by default.
       attr_accessor :auto_tx
@@ -35,9 +36,6 @@ module Neo4j
         @started = true
         @db = Java::OrgNeo4jGraphdbFactory::GraphDatabaseFactory.new.new_embedded_database(@db_location)
         @running = true
-        # Make tests pass right now by starting a top level transaction
-        # Needs to be removed one in built auto_tx support is implemented across nodes and relationships
-        @tx = begin_tx
       end
 
       # @return [Boolean] wether the session stopped successfully.
@@ -46,33 +44,28 @@ module Neo4j
         @db.shutdown
         @running = false
         @stopped = true
-        # Need to be removed as specified in constructor
-        @tx.success
-        @tx.close
       end
 
       def begin_tx
         @db.begin_tx
       end
 
+      def run_tx(&block)
+        Transaction::Placebo.run(begin_tx, &block)
+      end
+
       # Nodes
       # Create a new node. If auto_tx is true then we begin a new transaction and commit it after the creation
       def create_node(attributes, labels)
-        if @auto_tx
-          node, result = Transaction.run(self) { _create_node(attributes, labels) }
-          node = nil unless result
-          node
-        else
-          _create_node(attributes, labels)
-        end
+        run_in_transaction { _create_node attributes, labels }
       end
 
       def load(id)
-        @db.get_node_by_id(id)
+        run_in_transaction { _load id }
       end
 
       def load_rel(id)
-        @db.get_relationship_by_id(id)
+        run_in_transaction { _load_rel id }
       end
 
       def to_s
@@ -85,6 +78,14 @@ module Neo4j
           node = @db.create_node(*labels)
           node.props = attributes
           node
+        end
+
+        def _load(id)
+          @db.get_node_by_id(id)
+        end
+
+        def _load_rel(id)
+          @db.get_relationship_by_id(id)
         end
     end
   end

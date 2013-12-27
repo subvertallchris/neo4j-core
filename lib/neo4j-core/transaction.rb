@@ -1,5 +1,3 @@
-require "neo4j-core/transaction/placebo_transaction"
-
 module Neo4j
   module Transaction
     class << self
@@ -11,16 +9,19 @@ module Neo4j
       #   Otherwise it returns the currently running transaction.
       def begin(session = Session.current)
         session.begin_tx
-      rescue NoMethodError
-          _raise_invalid_session_error(session)
+      rescue NoMethodError => e
+          _raise_invalid_session_error(session, e)
       end
 
       def run(session = Session.current, &block)
-        PlaceboTransaction.run self.begin(session), &block
+        session.run_tx(&block)
+      rescue NoMethodError => e
+        _raise_invalid_session_error(session, e)
       end
 
       private
-        def _raise_invalid_session_error(session)
+        def _raise_invalid_session_error(session, e)
+          # STDERR.puts e
           raise Neo4j::Session::InvalidSessionTypeError.new(session.class)
         end
     end
