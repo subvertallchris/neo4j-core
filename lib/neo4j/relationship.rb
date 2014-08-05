@@ -152,9 +152,13 @@ module Neo4j
       end
 
       def load(neo_id, session = Neo4j::Session.current)
-        session.load_relationship(neo_id)
+        rel = _load(neo_id, session)
+        rel && rel.wrapper
       end
 
+      def _load(neo_id, session = Neo4j::Session.current)
+        session.load_relationship(neo_id)
+      end
     end
   end
 end
