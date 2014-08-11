@@ -183,7 +183,8 @@ module Neo4j::Server
 
     # (see Neo4j::Node#rels)
     def rels(match = {dir: :both})
-      match(CypherRelationship, "ID(r), TYPE(r)", match)
+      #match(CypherRelationship, "ID(r), TYPE(r)", match)
+      match(CypherRelationship, "r", match)
     end
 
     # @private

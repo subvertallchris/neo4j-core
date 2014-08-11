@@ -13,6 +13,7 @@ module Neo4j::Server
     end
 
     def post(url, options={})
+      #puts options
       HTTParty.post(url, merged_options(options))
     end
 

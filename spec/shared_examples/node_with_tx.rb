@@ -61,13 +61,12 @@ RSpec.shared_examples "Neo4j::Node with tx" do
     describe 'create_rel' do
       it 'creates the relationship' do
         rel = Neo4j::Transaction.run do
-          node_a = Neo4j::Node.create name: 'a'
-          node_b = Neo4j::Node.create name: 'b'
-          rel_a = node_a.create_rel(:best_friend, node_b, age: 42)
-          expect(node_a.rels.to_a).to eq([rel_a])
-          expect(rel_a[:age]).to eq(42)
-          rel_a
+          @node_a = Neo4j::Node.create name: 'a'
+          @node_b = Neo4j::Node.create name: 'b'
+          @rel_a = @node_a.create_rel(:best_friend, @node_b, age: 42)
         end
+        expect(@node_a.rels.to_a).to eq([@rel_a])
+        expect(@rel_a[:age]).to eq 42
         expect(rel[:age]).to eq(42)
       end
 

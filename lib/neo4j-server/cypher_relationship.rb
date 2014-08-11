@@ -44,16 +44,25 @@ module Neo4j::Server
       end
     end
 
+    def _start_node_id
+      @start_node_neo_id ||= get_node_id(:end)
+    end
+
+    def _end_node_id
+      @end_node_neo_id ||= get_node_id(:start)
+    end
+
     def _start_node
-      load_resource
-      id = resource_url_id(resource_url(:start))
-      Neo4j::Node._load(id)
+      @start_node ||= Neo4j::Node._load(get_node_id(:start))
     end
 
     def _end_node
+      @end_node ||= Neo4j::Node._load(get_node_id(:end))
+    end
+
+    def get_node_id(direction)
       load_resource
-      id = resource_url_id(resource_url(:end))
-      Neo4j::Node._load(id)
+      id = resource_url_id(resource_url(direction))
     end
 
     def get_property(key)
