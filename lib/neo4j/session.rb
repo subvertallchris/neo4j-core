@@ -1,7 +1,7 @@
 module Neo4j
   class Session
 
-    @@current_session = nil
+    @@current_session = @@current_reader = @@current_writer = nil
     @@all_sessions = {}
     @@factories = {}
 
@@ -81,24 +81,30 @@ module Neo4j
       # Creates a new session to Neo4j
       # @see also Neo4j::Server::CypherSession#open for :server_db params
       # @param db_type the type of database, e.g. :embedded_db, or :server_db
-      def open(db_type=:server_db, *params)
-        register(create_session(db_type, params))
+      def open(db_type=:server_db, url='http://localhost:7474', params={})
+        if db_type != :server_db && params[:name]
+          raise "Multiple sessions is currently only supported for Neo4j Server connections."
+        end
+        create_session(db_type, url, params)
       end
 
-      def open_named(db_type, name, default = nil, *params)
-        raise "Multiple sessions is currently only supported for Neo4j Server connections." unless db_type == :server_db
-        register(create_session(db_type, params), name, default)
-      end
-
-      def create_session(db_type, params = {})
+      def create_session(db_type, url='http://localhost:7474', params={})
         unless (@@factories[db_type])
           raise "Can't connect to database '#{db_type}', available #{@@factories.keys.join(',')}"
         end
-        @@factories[db_type].call(*params)
+        @@factories[db_type].call(url, params)
       end
 
       def current
         @@current_session
+      end
+
+      def current_reader
+        @@current_reader
+      end
+
+      def current_writer
+        @@current_writer
       end
 
       def current!
@@ -115,8 +121,23 @@ module Neo4j
         @@all_sessions[name] || raise("No session named #{name}.")
       end
 
-      def set_current(session)
-        @@current_session = session
+      def set_current(session, default)
+        if (default || default.nil?) || !!@@current_session
+          @@current_session = session
+        end
+        @@current_session
+      end
+
+      def set_current_writer(session, default)
+        @@current_writer = session
+        set_current_reader(session, default) unless @@current_reader
+        set_current(session, default)
+      end
+
+      def set_current_reader(session, default)
+        @@current_reader = session
+        set_current_writer(session, default) unless @@current_writer
+        set_current(session, default)
       end
 
       # Registers a callback which will be called immediately if session is already available,
@@ -143,14 +164,26 @@ module Neo4j
         _listeners.each {|li| li.call(event, data)}
       end
 
-      def register(session, name = nil, default = nil)
-        if default == true
-          set_current(session)
-        elsif default.nil?
-          set_current(session) unless @@current_session
-        end
+      def register(session, name = nil, default = nil, ha_state = false)
+        !ha_state ? standalone_register(session, name, default) : ha_register(session, name, default, ha_state)
+      end
+
+      def standalone_register(session, name, default)
         @@all_sessions[name] = session if name
+        set_current_writer(session, default)
+        set_current_reader(session, default)
         @@current_session
+      end
+
+      def ha_register(session, name, default, ha_state)
+        @@all_sessions[name] = name if name
+        @ha_status = true
+        ha_state == :master ? set_current_writer(session, default) : set_current_reader(session, default)
+        @@current_session
+      end
+
+      def ha_status
+        !!@ha_status
       end
 
       def unregister(session)

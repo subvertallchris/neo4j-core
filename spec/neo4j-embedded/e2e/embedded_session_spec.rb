@@ -106,6 +106,26 @@ module Neo4j::Embedded
       end
     end
 
+    describe 'current_reader and current_writer' do
+      before(:all) do
+        Neo4j::Session.current || create_embedded_session
+        Neo4j::Session.current.start unless Neo4j::Session.current.running?
+      end
+      let(:current) { Neo4j::Session.current }
+
+      it 'both respond' do
+        expect{Neo4j::Session.current_reader}.not_to raise_error
+        expect{Neo4j::Session.current_writer}.not_to raise_error
+      end
+
+      it 'sets current_reader to match current' do
+        current_reader = Neo4j::Session.current_reader
+        current_writer = Neo4j::Session.current_writer
+        expect(current_reader).to eq current
+        expect(current_writer).to eq current
+        expect(current_reader).to eq current_writer
+      end
+    end
   end
 
 end

@@ -100,6 +100,14 @@ describe Neo4j::Core::Query do
     it 'merges params'
 
     it 'merges options'
+
+    describe 'readable/writable' do
+      let(:query3) { Neo4j::Core::Query.new.set(z: 'foo') }
+      it 'evaluates based on the full query' do
+        expect((query3 & query2 & query1).writable?).to be_truthy
+      end
+    end
+
   end
 
   # START

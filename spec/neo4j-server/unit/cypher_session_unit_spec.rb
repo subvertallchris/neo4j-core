@@ -13,6 +13,7 @@ module Neo4j::Server
 
     let(:session) do
       allow_any_instance_of(CypherSession).to receive(:initialize_resource).and_return(nil)
+      allow_any_instance_of(CypherSession).to receive(:ha_state).and_return({"code"=>404})
       CypherSession.new('http://foo.bar')
     end
 
@@ -46,6 +47,7 @@ module Neo4j::Server
         }
       end
 
+      let(:ha_available_resource){ double("HA available test response",  code: 404, body: nil) }
       let(:data_resource) do
         {}
       end
@@ -53,9 +55,10 @@ module Neo4j::Server
       describe 'without auth params' do
 
         before do
-          expect(Neo4jServerEndpoint).to receive(:new).with({}).and_return(@endpoint)
+          expect(Neo4jServerEndpoint).to receive(:new).at_least(2).times.and_return(@endpoint)
 
           expect(@endpoint).to receive(:get).with('http://localhost:7474').and_return(TestResponse.new(root_resource_with_slash))
+          expect(@endpoint).to receive(:get).with('http://localhost:7474/db/manage/server/ha/available').and_return(ha_available_resource)
           expect(@endpoint).to receive(:get).with("http://localhost:7474/db/data/").and_return(TestResponse.new(data_resource))
         end
 
@@ -113,19 +116,20 @@ module Neo4j::Server
         let(:auth) { {basic_auth: { username: 'username', password: 'password'}} }
 
         before do
-          expect(Neo4jServerEndpoint).to receive(:new).with(auth).and_return(@endpoint)
+          expect(Neo4jServerEndpoint).to receive(:new).at_least(1).times.with({}).and_return(@endpoint)
+          expect(Neo4jServerEndpoint).to receive(:new).at_least(1).times.with(auth).and_return(@endpoint)
         end
-
         it 'creates session with basic auth params' do
           base_url = 'http://localhost:7474'
           params = [base_url, auth]
 
           expect(@endpoint).to receive(:get).with(base_url)
-          .and_return(TestResponse.new(root_resource_with_slash))
+            .and_return(TestResponse.new(root_resource_with_slash))
           expect(@endpoint).to receive(:get).with("http://localhost:7474/db/data/")
-          .and_return(TestResponse.new(data_resource))
-
-          session = Neo4j::Session.create_session(:server_db, params)
+            .and_return(TestResponse.new(data_resource))
+          expect(@endpoint).to receive(:get).with('http://localhost:7474/db/manage/server/ha/available')
+            .and_return(ha_available_resource)
+          session = Neo4j::Session.create_session(:server_db, *params)
         end
 
       end
@@ -135,24 +139,23 @@ module Neo4j::Server
         base_url = 'http://localhost:7474'
         auth = {basic_auth: { username: 'username', password: 'password'}}
         params = [base_url, auth]
-
-        expect(Neo4jServerEndpoint).to receive(:new).with(auth).and_return(@endpoint)
+        expect(Neo4jServerEndpoint).to receive(:new).with(auth).at_least(1).times.and_return(@endpoint)
         expect(@endpoint).to receive(:get).with(base_url)
           .and_return(TestResponse.new(root_resource_with_slash))
         expect(@endpoint).to receive(:get).with("http://localhost:7474/db/data/")
           .and_return(TestResponse.new(data_resource))
+        expect(@endpoint).to receive(:get).with('http://localhost:7474/db/manage/server/ha/available').exactly(2).times
+          .and_return(ha_available_resource)
+        expect(Neo4j::Server::Neo4jServerEndpoint).to receive(:new).with({}).at_least(1).times.and_return(@endpoint) 
+        session1 = Neo4j::Session.create_session(:server_db, *params)
 
-        Neo4j::Session.create_session(:server_db, params)
-
-        expect(Neo4jServerEndpoint).to receive(:new).with({}).and_return(@endpoint)
+        #expect(Neo4jServerEndpoint).to receive(:new).with({}).and_return(@endpoint)
         expect(@endpoint).to receive(:get).with('http://localhost:7474')
           .and_return(TestResponse.new(root_resource_with_no_slash))
         expect(@endpoint).to receive(:get).with("http://localhost:7474/db/data/")
           .and_return(TestResponse.new(data_resource))
-        
-        Neo4j::Session.create_session(:server_db)
+        session2 = Neo4j::Session.create_session(:server_db)
       end
-
     end
 
     describe 'instance methods' do

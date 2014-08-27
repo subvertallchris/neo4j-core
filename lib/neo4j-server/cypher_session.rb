@@ -11,30 +11,51 @@ module Neo4j::Server
     
     alias_method :super_query, :query
 
-
     # Opens a session to the database
     # @see Neo4j::Session#open
     #
     # @param [String] endpoint_url - the url to the neo4j server, defaults to 'http://localhost:7474'
     # @param [Hash] params - see https://github.com/jnunemaker/httparty/blob/master/lib/httparty.rb for supported HTTParty options
-    def self.open(endpoint_url=nil, params = {})
+    def self.open(endpoint_url, params={})
+      named_session_keys = self.separate_named_session_keys(params)
+      connection_params(params)
       endpoint = Neo4jServerEndpoint.new(params)
       url = endpoint_url || 'http://localhost:7474'
+      @url = url
       response = endpoint.get(url)
       raise "Server not available on #{url} (response code #{response.code})" unless response.code == 200
-      
       root_data = JSON.parse(response.body)
       data_url = root_data['data']
       data_url << '/' unless data_url.end_with?('/')
-
-      CypherSession.new(data_url, endpoint)
+      CypherSession.new(data_url, endpoint, named_session_keys)
     end
 
-    def initialize(data_url, endpoint = nil)
+    def self.connection_params(params={})
+      @params ||= params
+    end
+
+    def self.separate_named_session_keys(params={})
+      k = params.select{|e| e == :name || e == :default }
+      params.reject!{|e| e == :name || e == :default }
+      k
+    end
+
+    def initialize(data_url, endpoint = nil, name_params={})
       @endpoint = endpoint || Neo4jServerEndpoint.new(data_url)
-      Neo4j::Session.register(self)
+      ha_state = data_url.nil? ? false : self.ha_state(data_url)
+      Neo4j::Session.register(self, name_params[:name], name_params[:default], ha_state)
       initialize_resource(data_url)
       Neo4j::Session._notify_listeners(:session_available, self)
+    end
+
+    def ha_state(data_url)
+      server_url = data_url.split('/')
+      server_url.pop
+      ha_endpoint = [server_url.join('/'), '/manage/server/ha/available'].join
+      endpoint = Neo4jServerEndpoint.new(self.class.connection_params)
+      response = endpoint.get(ha_endpoint)
+      return false if response.code == 404
+      response.body == 'master' ? :master : :slave
     end
 
     def db_type

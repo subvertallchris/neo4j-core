@@ -9,9 +9,15 @@ module Neo4j::Core
       end
     end
 
+    module Writable
+      def self.writable?
+        true
+      end
+    end
 
     class Clause
       include CypherTranslator
+      @writable = false
 
       def initialize(arg, options = {})
         @arg = arg
@@ -91,6 +97,10 @@ module Neo4j::Core
         "(#{var}#{format_label(label_string)}#{attributes_string})"
       end
 
+      def writable?
+        self.class.writable?
+      end
+
       class << self
         attr_reader :keyword
 
@@ -104,6 +114,10 @@ module Neo4j::Core
 
         def to_cypher(clauses)
           "#{@keyword} #{clause_string(clauses)}"
+        end
+
+        def writable?
+          @writable
         end
       end
 
@@ -238,6 +252,7 @@ module Neo4j::Core
 
     class CreateClause < Clause
       @keyword = 'CREATE'
+      @writable = true
 
       def from_string(value)
         value
@@ -361,6 +376,7 @@ module Neo4j::Core
 
     class SetClause < Clause
       @keyword = 'SET'
+      @writable = true
 
       def from_key_and_value(key, value)
         case value

@@ -40,7 +40,7 @@ def create_server_session
 end
 
 def create_named_server_session(name, default = nil)
-  Neo4j::Session.open_named(:server_db, name, default, "http://localhost:7474")
+  Neo4j::Session.open(:server_db, "http://localhost:7474", {name: name, default: default})
 end
 
 def session
@@ -50,6 +50,39 @@ end
 
 def unique_random_number
   "#{Time.now.year}#{Time.now.to_i}#{Time.now.usec.to_s[0..2]}".to_i
+end
+
+module HaMethods
+    def master_connect
+    endpoint_and_request_stub(:endpoint_master_response, 7474)
+    ha_state_stub(:master)
+    @s1 = ha_session_open(7474)
+  end
+
+  def slave_connect
+    endpoint_and_request_stub(:endpoint_slave_response, 7475)
+    ha_state_stub(:slave)
+    @s2 = ha_session_open(7475)
+  end
+
+  def standalone_connect
+    endpoint_and_request_stub(:endpoint_master_response, 7474)
+    ha_state_stub(false)
+    @s3 = ha_session_open(7474)
+  end
+
+  def endpoint_and_request_stub(meth, port_num)
+    Neo4j::Server::Neo4jServerEndpoint.any_instance.stub(:get).and_return(send(meth))
+    self.send(meth).stub_chain('request.path.to_s').and_return("http://foo:#{port_num}/db/data/")
+  end
+
+  def ha_state_stub(type)
+    Neo4j::Server::CypherSession.any_instance.stub(:ha_state).and_return(type)
+  end
+
+  def ha_session_open(port_num)
+    ha_session.open(:server_db, "http://foo:#{port_num}/db/data")
+  end
 end
 
 FileUtils.rm_rf(EMBEDDED_DB_PATH)

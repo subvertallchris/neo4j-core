@@ -2,7 +2,6 @@ require 'spec_helper'
 
 module Neo4j::Server
 
-
   describe CypherSession, api: :server do
 
     def open_session
@@ -28,10 +27,12 @@ module Neo4j::Server
 
       it 'does not override the current session when default = false' do
         default = open_session
-        expect(Neo4j::Session.current).to eq(default)
+        current = Neo4j::Session.current
+        expect(current).to eq(default)
         name = :tesr
-        open_named_session(name)
-        expect(Neo4j::Session.current).to eq(default)
+        named = open_named_session(name)
+        expect(current).to eq(default)
+        expect(named).not_to eq(default)
       end
 
       it 'makes the new session current when default = true' do
@@ -71,6 +72,67 @@ module Neo4j::Server
       end
     end
 
+    describe 'high-availability checks' do
+      include HaMethods #see spec_helper
+      let(:ha_session) { Neo4j::Session }
+      let(:endpoint_master_response) {double("an HTTParty response for master", code: 200, 
+        body: '{"management": "http://foo:7474/db/manage/", "data": "http://foo:7474/db/data/"}')
+      }
+      let(:endpoint_slave_response) {double("an HTTParty response for slave", code: 200, 
+        body: '{"management": "http://foo:7475/db/manage/", "data": "http://foo:7475/db/data/"}')
+      }
+
+      context 'when configured as HA' do
+        before do
+          Neo4j::Session.class_variable_set(:@@current_writer, nil)
+          Neo4j::Session.class_variable_set(:@@current_reader, nil)
+        end
+
+        context 'with writer set first' do
+          before do
+            master_connect
+          end
+
+          it 'sets writer and reader immediately' do
+            expect(ha_session.current_writer).to eq @s1
+            expect(ha_session.current_reader).to eq @s1
+          end
+
+          it 'replaces reader when the second session is established' do
+            slave_connect
+            expect(ha_session.current_writer).to eq @s1
+            expect(ha_session.current_reader).to eq @s2
+          end
+        end
+
+        context 'with reader set first' do
+          before do 
+            Neo4j::Session.class_variable_set(:@@current_writer, nil)
+            Neo4j::Session.class_variable_set(:@@current_reader, nil)
+            slave_connect
+          end
+
+          it 'sets writer and reader immediately' do
+            expect(ha_session.current_reader).to eq @s2
+            expect(ha_session.current_writer).to eq @s2
+          end
+
+          it 'replaces writer when the second session is established' do
+            master_connect
+            expect(ha_session.current_writer).to eq @s1
+            expect(ha_session.current_reader).to eq @s2
+          end
+        end
+      end
+
+      context 'when configured as standalone' do
+        it 'sets both reader and writer immediately to the same session' do
+          standalone_connect
+          expect(ha_session.current_writer).to eq @s3
+          expect(ha_session.current_reader).to eq @s3
+        end
+      end
+    end
   end
 
 end

@@ -14,7 +14,7 @@ module Neo4j::Core
     include Neo4j::Core::QueryClauses
 
     def initialize(options = {})
-      @session = options[:session] || Neo4j::Session.current
+      @session        = options[:session] || Neo4j::Session.current
 
       @options = options
       @clauses = []
@@ -142,22 +142,18 @@ module Neo4j::Core
       self
     end
 
-    def response
-      cypher = self.to_cypher
-      response = ActiveSupport::Notifications.instrument('neo4j.cypher_query', context: @options[:context] || 'CYPHER', cypher: cypher, params: @_params) do
-        @session._query(cypher, @_params)
-      end
-      if !response.respond_to?(:error?) || !response.error?
-        response
-      else
-        response.raise_cypher_error
-      end
+    def writable?
+      @clauses.any?(&:writable?)
     end
 
     include Enumerable
 
+    def response
+      Neo4j::Core::QueryResponse.new(self, @options, @_params, @clauses).response
+    end
+
     def each
-      response = self.response
+      response = Neo4j::Core::QueryResponse.new(self, @options, @_params, @clauses).response
       if response.is_a?(Neo4j::Server::CypherResponse)
         response.to_node_enumeration
       else
@@ -259,9 +255,10 @@ module Neo4j::Core
     end
 
     def &(other_query)
-      raise "Sessions don't match!" if @session != other_query.session
+      # raise "Sessions don't match!" if @session != other_query.session
 
-      self.class.new(session: @session).tap do |new_query|
+      # self.class.new(session: @session).tap do |new_query|
+      self.class.new.tap do |new_query|
         new_query.options = self.options.merge(other_query.options)
         new_query.clauses = self.clauses + other_query.clauses
       end.params(other_query._params)

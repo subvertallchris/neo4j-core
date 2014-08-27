@@ -5,6 +5,7 @@ module Neo4j::Server
 
     let(:session) do
       allow_any_instance_of(CypherSession).to receive(:initialize_resource)
+      allow_any_instance_of(CypherSession).to receive(:ha_state).and_return({"code"=>404})
       CypherSession.new('http://an.url')
     end
 
