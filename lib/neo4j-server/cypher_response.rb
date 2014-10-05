@@ -74,7 +74,7 @@ module Neo4j::Server
 
     def hash_value_as_object(value, session)
       return value unless value['labels'] || value['type'] || is_transaction_response?
-      obj_type, data = if value['labels'] || value['type']
+      obj_type, data = if value['labels'] || value['type'] && !is_transaction_response?
                         add_entity_id(value)
                         [(value['labels'] ? CypherNode : CypherRelationship), value]
                       else
