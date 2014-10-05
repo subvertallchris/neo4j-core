@@ -112,10 +112,6 @@ module Neo4j::Server
     end
 
     def add_entity_id(data)
-      puts '-----------------'
-      puts 'add_entity_id'
-      puts "data: #{data}"
-      puts '^^^^^^^^^^^^^^^^^'
       data.merge!({'id' => data['self'].split('/')[-1].to_i})
     end
 
