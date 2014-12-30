@@ -121,6 +121,21 @@ namespace :neo4j do
     end
   end
 
+  desc 'Start the Neo4j Server asynchronously'
+  task :start_no_wait, :environment do |_, args|
+    puts "Starting Neo4j #{get_environment(args)}..."
+    if OS::Underlying.windows?
+      if `reg query "HKU\\S-1-5-19"`.size > 0
+        `#{install_location(args)}/bin/Neo4j.bat start-no-wait`  # start service
+      else
+        puts 'Starting Neo4j directly, not as a service.'
+        `#{install_location(args)}/bin/Neo4j.bat`
+      end
+    else
+      `#{install_location(args)}/bin/neo4j start-no-wait`
+    end
+  end
+
   desc 'Configure Server, e.g. rake neo4j:config[development,8888]'
   task :config, :environment, :port do |_, args|
 
